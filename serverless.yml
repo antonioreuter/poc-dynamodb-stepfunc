@@ -48,7 +48,7 @@ functions:
     handler: "src/ingestFDR.handler"
     name: "ingest-fdr"
     environment:
-      DYNAMODB_TABLE: "POC-FirmwareDistributionRequest"
+      DYNAMODB_TABLE: "POC-SourceTable"
       STATE_MACHINE: 
         'Fn::Join':
           - ":"
@@ -62,7 +62,7 @@ functions:
       - stream:
           type: dynamodb
           arn:
-            Fn::GetAtt: [POCFirmwareDistributionRequest, StreamArn]
+            Fn::GetAtt: [POCSourceTable, StreamArn]
 
   job-orchestrator:
     handler: "src/jobOrchestrator.handler"
@@ -72,14 +72,14 @@ functions:
     handler: "src/errorHandler.handler"
     name: "error-handler"
     environment:
-      DYNAMODB_TABLE: "POC-FirmwareUnprocessedItems"
+      DYNAMODB_TABLE: "POC-UnprocessedItems"
 
 stepFunctions:
   stateMachines:
     orchestrateIoTJobsMachine:
       name: "orchestrate-iot-jobs-machine"
       definition:
-        Comment: "A state machine to orchestrate IoT Jobs based on Firmware Distribution Requests"
+        Comment: "A state machine to orchestrate IoT Jobs"
         StartAt: "job-orchestrator"
         States:
           job-orchestrator:
@@ -116,10 +116,10 @@ stepFunctions:
 
 resources:
   Resources:
-    POCFirmwareDistributionRequest:
+    POCSourceTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: "POC-FirmwareDistributionRequest"
+        TableName: "POC-SourceTable"
         StreamSpecification:
           StreamViewType: KEYS_ONLY
         AttributeDefinitions:
@@ -131,10 +131,10 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 3
           WriteCapacityUnits: 3
-    POCFirmwareUnprocessedItems:
+    POCUnprocessedItems:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: "POC-FirmwareUnprocessedItems"
+        TableName: "POC-UnprocessedItems"
         AttributeDefinitions:
           - AttributeName: "id"
             AttributeType: "S"          
